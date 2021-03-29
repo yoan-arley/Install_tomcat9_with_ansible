@@ -1,0 +1,7 @@
+---
+# vars file for services_tomcat
+
+pkg: 
+  - tomcat9
+  - tomcat9-user
+  - tomcat9-admin

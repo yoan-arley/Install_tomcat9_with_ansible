@@ -1,0 +1,81 @@
+---
+# tasks file for services_tomcat
+#
+- name: Update server
+  include: "update.yml"
+  tags: update
+
+- name: "Install Java 11"
+  apt:
+    name: 'openjdk-11-jdk'
+    state: present
+  tags: jdk
+
+- name: "Install Tomcat 9"
+  apt:
+    name: "{{item}}"
+    state: present
+  with_items: "{{pkg}}"
+  become: yes
+  tags: pkg
+
+- name: Install GraalVM
+  include: "./graalvm.yml"
+  tags: graalvm
+
+- name: "Enable Tomcat services"
+  include: "./systemd_tc9.yml"
+  tags: systemd_tc9
+
+- name: "Config tomcat user"
+  lineinfile:
+    path: "/etc/tomcat9/tomcat-users.xml"
+    insertbefore: '</tomcat-users>'
+    line: '  <role rolename="admin-gui"/>
+      <role rolename="manager-gui"/>
+      <user username="golden" password="{{password}}" roles="admin-gui,manager-gui"/>'
+
+- name: "Enable Tomcat services"
+  include: "./systemd_tc9.yml"
+  tags: systemd_tc9
+
+- name: "Create the delivery directory"
+  file: 
+    path: "/home/golden/deliveries"
+    state: directory
+    owner: golden
+    group: golden
+    mode: '0760'
+  tags: delivery
+
+- name: "The logs directory"
+  file: 
+    src: "/var/log/tomcat9"
+    dest: "/home/golden/logs"
+    state: link
+  tags: logs
+
+- name: "Create the webapps directory"
+  file:
+    path: "/home/golden/depo"
+    state: directory
+    owner: tomcat
+    group: tomcat
+    mode: "0760"
+  tags: depo
+
+- name: "S Link webapps"
+  file:
+    src: "/var/lib/tomcat9/webapps"
+    dest: "/home/golden/tomcat-webapps"
+    state: link
+
+- name: "S link work"
+  file: 
+    src: "/var/lib/tomcat9/work"
+    dest: "/home/golden/tomcat-work"
+    state: link
+
+- name: "Restart tomcat"
+  include: "./systemd_tc9.yml"
+  tags: systemd_tc9

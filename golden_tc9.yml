@@ -1,0 +1,7 @@
+---
+- name: "Install Tomcat 9"
+  hosts: sv-gold
+  become: yes
+  remote_user: golden
+  roles:
+    - role: "services_tomcat"

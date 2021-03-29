@@ -1,0 +1,6 @@
+- name: "Enable Tomcat services"
+  systemd:
+    name: tomcat9
+    enabled: yes
+    state: started
+  become: yes

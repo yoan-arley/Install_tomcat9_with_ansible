@@ -1,0 +1,55 @@
+---
+- name: "Download the new release of GraalVM"
+  get_url:
+    url: "https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-21.0.0.2/graalvm-ce-java11-linux-amd64-21.0.0.2.tar.gz"
+    dest: "/usr/lib/jvm/"
+  tags: upload
+
+- name: "Unzip archive"
+  shell:
+  args:
+    cmd: "cd /usr/lib/jvm/ && tar xzvf graalvm-ce-java11-linux-amd64-21.0.0.2.tar.gz"
+  tags: tar
+
+- name: "S link graalvm"
+  file:
+    src: "/usr/lib/jvm/graalvm-ce-java11-21.0.0.2"
+    dest: "/usr/lib/jvm/graalvm"
+    state: link
+  tags: link_graalvm
+
+- name: "Alternative Java"
+  shell: 
+  args: 
+    cmd: "update-alternatives --install /usr/bin/java java /usr/lib/jvm/graalvm/bin/java 4" 
+  become: yes
+  tags: deb
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: "Alternative Java"
+  shell: 
+  args: 
+    cmd: "alternatives --install /usr/bin/java java /usr/lib/jvm/graalvm/bin/java 4" 
+  become: yes
+  tags: ubu
+  when: ansible_facts['os_family'] == "Ubuntu"
+
+- name: "Env JAVA_HOME deb"
+  shell: 
+  args: 
+    cmd: "echo 1 | update-alternatives --config java"
+  become: yes
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: "Env JAVA_HOME deb"
+  shell: 
+  args: 
+    cmd: "echo 1 | alternatives --config java"
+  become: yes
+  when: ansible_facts['os_family'] == "Ubuntu"
+
+- name: "Java Home GraalVM"
+  lineinfile:
+    path: "/lib/systemd/system/tomcat9.service"
+    insertafter: 'Environment="JAVA_OPTS=-Djava.awt.headless=true"'
+    line: 'Environment="JAVA_HOME=/usr/lib/jvm/graalvm"'
